@@ -40,6 +40,7 @@
 #define CRCPP_USE_CPP11
 #include "vesc_driver/crc.hpp"
 
+#define M_PI 3.14
 namespace vesc_driver
 {
 

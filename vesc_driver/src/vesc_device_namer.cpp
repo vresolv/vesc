@@ -14,7 +14,7 @@
 # limitations under the License.
 */
 
-#include <unistd.h>
+#include <Windows.h>
 #include <stdlib.h>
 
 #include <iostream>
@@ -24,14 +24,14 @@
 
 int main(int argc, char ** argv)
 {
-  std::string devicePort = (argc > 1 ? argv[1] : "ttyACM0");
+  std::string devicePort = (argc > 1 ? argv[1] : "COM3");
   std::string maxRetry_ = (argc > 2 ? argv[2] : "50");
   std::string VESC_UUID_ENV = "VESC_UUID_ENV=";
 
-  vesc_driver::VescDeviceLookup lookup("/dev/" + devicePort);
+  vesc_driver::VescDeviceLookup lookup(devicePort);
   int maxRetry = stoi(maxRetry_);
   for (int i = 0; i < maxRetry; i++) {
-    usleep(20);
+    Sleep(20);
     if (lookup.isReady()) {break;}
   }
 
@@ -39,7 +39,7 @@ int main(int argc, char ** argv)
     VESC_UUID_ENV += lookup.deviceUUID();
 
     std::cout << lookup.deviceUUID() << std::endl;
-    setenv("VESC_UUID_ENV", lookup.deviceUUID(), true);
+    _putenv(VESC_UUID_ENV.c_str());
     return 0;
   } else {
     return -1;
