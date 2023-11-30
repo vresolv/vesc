@@ -38,9 +38,9 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     vesc_config = os.path.join(
-        get_package_share_directory('vesc_driver'),
-        'params',
-        'vesc_config.yaml'
+        get_package_share_directory('bandit_config'),
+        'config',
+        'banditParamConfig.yaml'
         )
     return LaunchDescription([
         DeclareLaunchArgument(

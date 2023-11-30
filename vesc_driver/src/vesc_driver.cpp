@@ -72,7 +72,7 @@ VescDriver::VescDriver(const rclcpp::NodeOptions & options)
   try {
     vesc_.connect(port);
   } catch (SerialException e) {
-    RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC, %s.", e.what());
+    RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC on port %s, %s.", port, e.what());
     rclcpp::shutdown();
     return;
   }
