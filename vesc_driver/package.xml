@@ -17,6 +17,8 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>asio_cmake_module</buildtool_depend>
+  
+  <build_depend>qt_ros</build_depend>
 
   <depend>asio</depend>
   <depend>rclcpp</depend>
@@ -27,7 +29,8 @@
   <depend>serial_driver</depend>
   <depend>sensor_msgs</depend>
 
-
+  <exec_depend>qt_ros</exec_depend>
+  
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

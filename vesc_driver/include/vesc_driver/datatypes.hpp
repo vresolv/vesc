@@ -49,6 +49,8 @@
 #ifndef VESC_DRIVER__DATATYPES_HPP_
 #define VESC_DRIVER__DATATYPES_HPP_
 
+#include <QObject>
+#include "tcphub.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -73,6 +75,46 @@ typedef enum
   CFG_T_BOOL
 }
 CFG_T;
+
+typedef enum 
+{
+  CONN_NONE = 0,
+  CONN_SERIAL,
+  CONN_CANBUS,
+  CONN_TCP,
+  CONN_BLE,
+  CONN_UDP,
+  CONN_TCP_HUB,
+} conn_t;
+
+struct TCP_HUB_DEVICE {
+    Q_GADGET
+
+public:
+    Q_PROPERTY(QString server MEMBER server)
+    Q_PROPERTY(int port MEMBER port)
+    Q_PROPERTY(QString id MEMBER id)
+    Q_PROPERTY(QString password MEMBER password)
+
+    TCP_HUB_DEVICE() {
+        port = 65101;
+    }
+
+    Q_INVOKABLE bool ping() {
+        return TcpHub::ping(server, port, id);
+    }
+
+    Q_INVOKABLE QString uuid() {
+        return QString("%1:%2:%3").arg(server).arg(port).arg(id);
+    }
+
+    QString server;
+    int port;
+    QString id;
+    QString password;
+};
+
+Q_DECLARE_METATYPE(TCP_HUB_DEVICE);
 
 typedef enum
 {

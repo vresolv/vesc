@@ -14,6 +14,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 find_package(asio_cmake_module REQUIRED)
 find_package(ASIO REQUIRED)
+find_package(Qt5 COMPONENTS Network REQUIRED)
 
 find_package(Threads)
 
@@ -28,7 +29,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/vesc_packet.cpp
   src/vesc_packet_factory.cpp
 )
-ament_target_dependencies(${PROJECT_NAME} "ASIO")
+ament_target_dependencies(${PROJECT_NAME} "ASIO" Qt5::Network)
 
 if(WIN32)
   set_target_properties(${PROJECT_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
