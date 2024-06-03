@@ -32,6 +32,7 @@
 #define VESC_DRIVER__VESC_INTERFACE_HPP_
 
 #include "vesc_driver/vesc_packet.hpp"
+#include "datatypes.hpp"
 
 #include <exception>
 #include <functional>
@@ -40,7 +41,8 @@
 #include <stdexcept>
 #include <string>
 #include <QTcpSocket>
-#include <vbytearray.h>
+#include <QSettings>
+#include "vbytearray.h"
 
 namespace vesc_driver
 {

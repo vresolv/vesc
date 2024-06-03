@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#include "tcphub.h"
+#include "vesc_driver/tcphub.h"
 //#include "utility.h" //TODO remove it
 #include <QDateTime>
 #include <QEventLoop>

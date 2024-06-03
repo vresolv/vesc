@@ -17,7 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     */
 
-#include "vbytearray.h"
+#include "vesc_driver/vbytearray.h"
 #include <cmath>
 #include <stdint.h>
 

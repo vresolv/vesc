@@ -34,20 +34,37 @@
 #include <optional>
 #include <memory>
 #include <string>
+#include <fstream>
+#include <json.hpp>
 
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/imu.hpp>
-#include <std_msgs/msg/float64.hpp>
-#include <vesc_msgs/msg/vesc_state.hpp>
-#include <vesc_msgs/msg/vesc_state_stamped.hpp>
-#include <vesc_msgs/msg/vesc_imu.hpp>
-#include <vesc_msgs/msg/vesc_imu_stamped.hpp>
+#include <DDSSubscriber.hpp>
+#include <DDSPublisher.hpp>
+
+//#include <rclcpp/rclcpp.hpp>
+//#include <sensor_msgs/msg/imu.hpp>
+//#include <std_msgs/msg/float64.hpp>
+//#include <vesc_msgs/msg/vesc_state.hpp>
+//#include <vesc_msgs/msg/vesc_state_stamped.hpp>
+//#include <vesc_msgs/msg/vesc_imu.hpp>
+//#include <vesc_msgs/msg/vesc_imu_stamped.hpp>
+#include <VescStatePubSubTypes.h>
+#include <VescStateStampedPubSubTypes.h>
+#include <VescImuPubSubTypes.h>
+#include <VescImuStampedPubSubTypes.h>
+#include <Float64PubSubTypes.h>
+#include <ImuPubSubTypes.h>
 
 #include "vesc_driver/vesc_interface.hpp"
 #include "vesc_driver/vesc_packet.hpp"
 
 namespace vesc_driver
 {
+
+//using std_msgs::msg::Float64;
+//using vesc_msgs::msg::VescState;
+//using vesc_msgs::msg::VescStateStamped;
+//using vesc_msgs::msg::VescImuStamped;
+//using sensor_msgs::msg::Imu;
 
 using std_msgs::msg::Float64;
 using vesc_msgs::msg::VescState;
@@ -56,10 +73,11 @@ using vesc_msgs::msg::VescImuStamped;
 using sensor_msgs::msg::Imu;
 
 class VescDriver
-  : public rclcpp::Node
 {
 public:
-  explicit VescDriver(const rclcpp::NodeOptions & options);
+  //explicit VescDriver(const rclcpp::NodeOptions & options);
+   VescDriver(const std::string& configFile);
+   ~VescDriver();
 
 private:
   // interface to the VESC
@@ -70,15 +88,17 @@ private:
   // limits on VESC commands
   struct CommandLimit
   {
+
     CommandLimit(
-      rclcpp::Node * node_ptr,
-      const std::string & str,
-      const std::optional<double> & min_lower = std::optional<double>(),
-      const std::optional<double> & max_upper =
-      std::optional<double>());
+         //rclcpp::Node * node_ptr,
+         const std::string & str,
+         const std::optional<double> & min_lower = std::optional<double>(),
+         const std::optional<double> & max_upper = std::optional<double>()
+       );
+
+    //rclcpp::Node * node_ptr;
+    //rclcpp::Logger logger;
     double clip(double value);
-    rclcpp::Node * node_ptr;
-    rclcpp::Logger logger;
     std::string name;
     std::optional<double> lower;
     std::optional<double> upper;
@@ -91,19 +111,43 @@ private:
   CommandLimit position_limit_;
   CommandLimit servo_limit_;
 
-  // ROS services
-  rclcpp::Publisher<VescStateStamped>::SharedPtr state_pub_;
-  rclcpp::Publisher<VescImuStamped>::SharedPtr imu_pub_;
-  rclcpp::Publisher<Imu>::SharedPtr imu_std_pub_;
+  // DDS services
+  //rclcpp::Publisher<VescStateStamped>::SharedPtr state_pub_;
+  //rclcpp::Publisher<VescImuStamped>::SharedPtr imu_pub_;
+  //rclcpp::Publisher<Imu>::SharedPtr imu_std_pub_;
 
-  rclcpp::Publisher<Float64>::SharedPtr servo_sensor_pub_;
-  rclcpp::SubscriptionBase::SharedPtr duty_cycle_sub_;
-  rclcpp::SubscriptionBase::SharedPtr current_sub_;
-  rclcpp::SubscriptionBase::SharedPtr brake_sub_;
-  rclcpp::SubscriptionBase::SharedPtr speed_sub_;
-  rclcpp::SubscriptionBase::SharedPtr position_sub_;
-  rclcpp::SubscriptionBase::SharedPtr servo_sub_;
-  rclcpp::TimerBase::SharedPtr timer_;
+  //rclcpp::Publisher<Float64>::SharedPtr servo_sensor_pub_;
+  //rclcpp::SubscriptionBase::SharedPtr duty_cycle_sub_;
+  //rclcpp::SubscriptionBase::SharedPtr current_sub_;
+  //rclcpp::SubscriptionBase::SharedPtr brake_sub_;
+  //rclcpp::SubscriptionBase::SharedPtr speed_sub_;
+  //rclcpp::SubscriptionBase::SharedPtr position_sub_;
+  //rclcpp::SubscriptionBase::SharedPtr servo_sub_;
+  //rclcpp::TimerBase::SharedPtr timer_;
+
+  //TODO enable subscribers as needed in the future
+  DDSPublisher<VescStateStamped, vesc_msgs::msg::VescStateStampedPubSubType> state_pub_;
+  DDSPublisher<VescImuStamped, vesc_msgs::msg::VescImuStampedPubSubType> imu_pub_;
+  DDSPublisher<Imu, sensor_msgs::msg::ImuPubSubType> imu_std_pub_;
+  DDSPublisher<Float64, std_msgs::msg::Float64PubSubType> servo_sensor_pub_;
+
+  //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> duty_cycle_sub_;
+  //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> current_sub_;
+  //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> brake_sub_;
+  DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> speed_sub_;
+  //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> position_sub_;
+  //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> servo_sub_;
+
+  std::string port_;
+
+  std::thread timerThread_;
+  std::atomic_bool timerThreadRunning_;
+
+  void runTimer(const std::chrono::milliseconds interval);
+
+  int32_t getCurrentTimeInSeconds() const;
+
+  void parseConfigFile(const std::string& configFile);
 
   // driver modes (possible states)
   typedef enum
@@ -118,13 +162,14 @@ private:
   int fw_version_major_;                ///< firmware major version reported by vesc
   int fw_version_minor_;                ///< firmware minor version reported by vesc
 
-  // ROS callbacks
-  void brakeCallback(const Float64::SharedPtr brake);
-  void currentCallback(const Float64::SharedPtr current);
-  void dutyCycleCallback(const Float64::SharedPtr duty_cycle);
-  void positionCallback(const Float64::SharedPtr position);
-  void servoCallback(const Float64::SharedPtr servo);
-  void speedCallback(const Float64::SharedPtr speed);
+  //TODO enable as needed in the future
+  // DDS callbacks
+  //void brakeCallback(const Float64 brake);
+  //void currentCallback(const Float64 current);
+  //void dutyCycleCallback(const Float64 duty_cycle);
+  //void positionCallback(const Float64 position);
+  //void servoCallback(const Float64 servo);
+  void speedCallback(const Float64 speed);
   void timerCallback();
 };
 
