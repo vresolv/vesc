@@ -16,32 +16,32 @@
 
 #include <Windows.h>
 #include <stdlib.h>
-
 #include <iostream>
+
 #include <string>
 
 #include <vesc_driver/vesc_device_uuid_lookup.hpp>
 
-int main(int argc, char ** argv)
-{
-  std::string devicePort = (argc > 1 ? argv[1] : "COM3");
-  std::string maxRetry_ = (argc > 2 ? argv[2] : "50");
-  std::string VESC_UUID_ENV = "VESC_UUID_ENV=";
-
-  vesc_driver::VescDeviceLookup lookup(devicePort);
-  int maxRetry = stoi(maxRetry_);
-  for (int i = 0; i < maxRetry; i++) {
-    Sleep(20);
-    if (lookup.isReady()) {break;}
-  }
-
-  if (lookup.isReady()) {
-    VESC_UUID_ENV += lookup.deviceUUID();
-
-    std::cout << lookup.deviceUUID() << std::endl;
-    _putenv(VESC_UUID_ENV.c_str());
-    return 0;
-  } else {
-    return -1;
-  }
-}
+//int main(int argc, char ** argv)
+//{
+//  std::string devicePort = (argc > 1 ? argv[1] : "COM3");
+//  std::string maxRetry_ = (argc > 2 ? argv[2] : "50");
+//  std::string VESC_UUID_ENV = "VESC_UUID_ENV=";
+//
+//  vesc_driver::VescDeviceLookup lookup(devicePort);
+//  int maxRetry = stoi(maxRetry_);
+//  for (int i = 0; i < maxRetry; i++) {
+//    Sleep(20);
+//    if (lookup.isReady()) {break;}
+//  }
+//
+//  if (lookup.isReady()) {
+//    VESC_UUID_ENV += lookup.deviceUUID();
+//
+//    std::cout << lookup.deviceUUID() << std::endl;
+//    _putenv(VESC_UUID_ENV.c_str());
+//    return 0;
+//  } else {
+//    return -1;
+//  }
+//}

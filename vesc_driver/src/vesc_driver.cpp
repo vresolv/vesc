@@ -70,7 +70,8 @@ VescDriver::VescDriver(const std::string& configFilePath)
   speed_sub_(std::bind(&VescDriver::speedCallback, this, _1), "Speed", "commands/motor/speed"),
   //position_sub_(std::bind(&VescDriver::positionCallback, this, _1), "Position", "commands/motor/position"),
   //servo_sub_(std::bind(&VescDriver::servoCallback, this, _1), "Servo", "commands/servo/position"),
-  timerThreadRunning_(true)
+  timerThreadRunning_(true),
+  logger("VescDriver")
 {
   // get vesc serial port address
   //std::string port = declare_parameter<std::string>("port", "");
@@ -83,7 +84,7 @@ VescDriver::VescDriver(const std::string& configFilePath)
     vesc_.connect(port_);
   } catch (SerialException e)
   {
-     std::cout << "Failed to connect to the VESC on port " << port_ << ", " << e.what() << std::endl;
+     logger.log(DDSLogger::Level::LOG_ERROR, "Failed to connect to the VESC on port " + port_ + ", " + e.what());
      std::exit(EXIT_FAILURE);
   }
 
@@ -112,7 +113,7 @@ void VescDriver::parseConfigFile(const std::string& configFilePath)
    std::ifstream configFile(configFilePath);
    if (!configFile.is_open())
    {
-      std::cout << "Could not open VESC config file: " + configFilePath << std::endl;
+      logger.log(DDSLogger::Level::LOG_ERROR, "Could not open VESC config file: " + configFilePath);
       std::exit(EXIT_FAILURE);
    }
 
@@ -223,7 +224,7 @@ void VescDriver::timerCallback()
   // VESC interface should not unexpectedly disconnect, but test for it anyway
   if (!vesc_.isConnected())
   {
-    std::cout << "Unexpectedly disconnected from serial port.\n";
+    logger.log(DDSLogger::Level::LOG_ERROR, "Unexpectedly disconnected from serial port.");
     std::exit(EXIT_FAILURE);
   }
 
@@ -238,7 +239,8 @@ void VescDriver::timerCallback()
     vesc_.requestFWVersion();
     if (fw_version_major_ >= 0 && fw_version_minor_ >= 0)
     {
-      std::cout << "Connected to VESC with firmware version " << fw_version_major_ << "." << fw_version_minor_ << std::endl;
+      logger.log(DDSLogger::Level::LOG_INFO, "Connected to VESC with firmware version " +
+         std::to_string(fw_version_major_) + "." + std::to_string(fw_version_minor_));
       driver_mode_ = MODE_OPERATING;
     }
   }
@@ -256,7 +258,7 @@ void VescDriver::timerCallback()
   }
 }
 
-int32_t VescDriver::getCurrentTimeInSeconds() const
+int32_t VescDriver::getCurrentTimeInSeconds()
 {
    auto duration = std::chrono::system_clock::now().time_since_epoch();
 
@@ -264,7 +266,7 @@ int32_t VescDriver::getCurrentTimeInSeconds() const
 
    if (seconds > std::numeric_limits<int32_t>::max())
    {
-      std::cout << "ERROR: Time value exceeds int32_t range.\n";
+      logger.log(DDSLogger::Level::LOG_WARNING, "Time value exceeds int32_t range.");
       return 0;
    }
 
@@ -309,8 +311,6 @@ void VescDriver::vescPacketCallback(const std::shared_ptr<VescPacket const> & pa
     state_msg.state().avg_vd(values->avg_vd());
     state_msg.state().avg_vq(values->avg_vq());
 
-    //TODO initialize pubs and subs
-    //state_pub_->publish(state_msg);
     state_pub_.write(state_msg);
   }
   else if (packet->name() == "FWVersion")
@@ -320,7 +320,7 @@ void VescDriver::vescPacketCallback(const std::shared_ptr<VescPacket const> & pa
     // todo: might need lock here
     fw_version_major_ = fw_version->fwMajor();
     fw_version_minor_ = fw_version->fwMinor();
-    std::cout << "-=" << fw_version->hwname() << "=- hardware paired " << fw_version->paired() << std::endl;
+    logger.log(DDSLogger::Level::LOG_INFO, "-=" + fw_version->hwname() + "=- hardware paired " + std::to_string(fw_version->paired()));
   }
   else if (packet->name() == "ImuData")
   {

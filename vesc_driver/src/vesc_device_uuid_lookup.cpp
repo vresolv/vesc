@@ -16,7 +16,6 @@
 #include <cassert>
 #include <cmath>
 #include <sstream>
-#include <iostream>
 #include <iomanip>
 #include <string>
 #include <memory>
@@ -35,13 +34,14 @@ VescDeviceLookup::VescDeviceLookup(std::string name)
     std::bind(&VescDeviceLookup::vescErrorCallback, this, _1)
 ),
   ready_(false),
-  device_(name)
+  device_(name),
+  logger("VescDeviceLookup")
 {
   try {
     vesc_.connect(device_);
     vesc_.requestFWVersion();
   } catch (SerialException e) {
-    std::cerr << "VESC error on port " << device_ << std::endl << e.what() << std::endl;
+    logger.log(DDSLogger::Level::LOG_ERROR, "VESC error on port " + device_ + "\n" + e.what());
     return;
   }
 }

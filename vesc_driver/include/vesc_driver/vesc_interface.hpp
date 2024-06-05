@@ -32,7 +32,7 @@
 #define VESC_DRIVER__VESC_INTERFACE_HPP_
 
 #include "vesc_driver/vesc_packet.hpp"
-#include "datatypes.hpp"
+//#include "datatypes.hpp"
 
 #include <exception>
 #include <functional>
@@ -40,9 +40,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <QTcpSocket>
-#include <QSettings>
-#include "vbytearray.h"
 
 namespace vesc_driver
 {
@@ -128,47 +125,11 @@ public:
   void setSpeed(double speed);
   void setPosition(double position);
   void setServo(double servo);
-  void setLastConnectionType(conn_t type);
-  void packetReceived(QByteArray &packet);
-  int try_decode_packet(unsigned char *buffer, unsigned int in_len, int *bytes_left, QVector<QByteArray> &decodedPackets);
-  void processPacket(QByteArray data);
-
-  Q_INVOKABLE bool updateTcpHubPassword(QString uuid, QString newPass);
-  Q_INVOKABLE void storeSettings();
-  Q_INVOKABLE void disconnectPort();
-  Q_INVOKABLE void connectTcp(QString server, int port);
-  Q_INVOKABLE void connectTcpHub(QString server, int port, QString id, QString pass);
-
-private slots:
-  //slot to receive tcp data
-  void tcpInputDataAvailable();
-  void timerSlot();
 
 private:
   // Pimpl - hide serial port members from class users
   class Impl;
   std::unique_ptr<Impl> impl_;
-  QTcpSocket *mTcpSocket;
-  bool mTcpConnected;
-  QTimer *mTimer;
-  int mRxTimer;
-  int mByteTimeout;
-  unsigned int mRxReadPtr;
-  unsigned int mRxWritePtr;
-  int mBytesLeft;
-  unsigned int mMaxPacketLen;
-  unsigned int mBufferLen;
-  unsigned char *mRxBuffer;
-
-  QSettings mSettings;
-  conn_t mLastConnType;
-  QString mLastTcpServer;
-  int mLastTcpPort;
-  QString mLastTcpHubServer;
-  int mLastTcpHubPort;
-  QString mLastTcpHubVescID;
-  QString mLastTcpHubVescPass;
-  QVariantList mTcpHubDevs;
 
 };
 

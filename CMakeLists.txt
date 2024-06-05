@@ -5,12 +5,13 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
 endif()
 
-find_package(Qt5 COMPONENTS Network REQUIRED)
-
-file(GLOB vesc_driver_sources "vesc_driver/src/*.cpp")
-
 add_executable(${PROJECT_NAME}_node
-    ${vesc_driver_sources}
+    vesc_driver/src/vesc_device_namer.cpp
+    vesc_driver/src/vesc_device_uuid_lookup.cpp
+    vesc_driver/src/vesc_driver.cpp
+    vesc_driver/src/vesc_interface.cpp
+    vesc_driver/src/vesc_packet_factory.cpp
+    vesc_driver/src/vesc_packet.cpp
 )
 
 include_directories(vesc_driver/include)
@@ -18,9 +19,11 @@ include_directories(vesc_driver/include)
 target_link_libraries(
     ${PROJECT_NAME}_node
     DDSCommon
+    asio_libs
+    io_context
+    serial_driver
     fastrtps
     fastcdr
-    Qt5::Network
 )
 
 ## Mark executables and/or libraries for installation

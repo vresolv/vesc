@@ -25,6 +25,8 @@
 #include "vesc_driver/vesc_interface.hpp"
 #include "vesc_driver/vesc_packet.hpp"
 
+#include <DDSLogger.hpp>
+
 namespace vesc_driver
 {
 
@@ -52,6 +54,8 @@ private:
   VescInterface vesc_;
   void vescPacketCallback(const std::shared_ptr<VescPacket const> & packet);
   void vescErrorCallback(const std::string & error);
+
+  DDSLogger logger;
 
   static std::string decode_uuid(const uint8_t * uuid)
   {

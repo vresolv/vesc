@@ -39,6 +39,7 @@
 
 #include <DDSSubscriber.hpp>
 #include <DDSPublisher.hpp>
+#include <DDSLogger.hpp>
 
 //#include <rclcpp/rclcpp.hpp>
 //#include <sensor_msgs/msg/imu.hpp>
@@ -143,9 +144,11 @@ private:
   std::thread timerThread_;
   std::atomic_bool timerThreadRunning_;
 
+  DDSLogger logger;
+
   void runTimer(const std::chrono::milliseconds interval);
 
-  int32_t getCurrentTimeInSeconds() const;
+  int32_t getCurrentTimeInSeconds();
 
   void parseConfigFile(const std::string& configFile);
 
