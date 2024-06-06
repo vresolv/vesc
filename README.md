@@ -4,14 +4,29 @@
 
 Packages to interface with Veddar VESC motor controllers. See https://vesc-project.com/ for details
 
-This is a ROS2 implementation of the ROS1 driver using the new serial driver located in [transport drivers](https://github.com/ros-drivers/transport_drivers).
+This is a FastDDS implementation of the ROS1 driver using the new serial driver located in [transport drivers](https://github.com/ros-drivers/transport_drivers).
 
 ## How to test
 
 1. Clone this repository and [transport drivers](https://github.com/ros-drivers/transport_drivers) into `src`.
-2. `rosdep update && rosdep install --from-paths src -i -y`
-3. Plug in the VESC with a USB cable.
-4. Modify `vesc/vesc_driver/params/vesc_config.yaml` to reflect any changes.
-5. Build the packages `colcon build`
-6. `ros2 launch vesc_driver vesc_driver_node.launch.py`
-7. If prompted "permission denied" on the serial port: `sudo chmod 777 /dev/ttyACM0`
+2. Plug in the VESC with a USB cable.
+3. Add a JSON config file for vesc with the following properties [example here](../example_configs/vescConfig.json):
+-   "port" [string]
+-   "brake_max" [double]
+-   "brake_min" [double]
+-   "current_max" [double]
+-   "current_min" [double]
+-   "duty_cycle_max" [double]
+-   "duty_cycle_min" [double]
+-   "position_max" [double]
+-   "position_min" [double]
+-   "servo_max" [double]
+-   "servo_min" [double]
+-   "speed_max" [double]
+-   "speed_min" [double]
+-   "tire_radius" [double]
+-   "sphere_radius" [double]
+
+4. Build the sub-project VESC_Motor_Controller 
+5. Launch the created executable through command line and also provide the vesc config json file path
+6. If prompted "permission denied" on the serial port: `sudo chmod 777 /dev/ttyACM0`
