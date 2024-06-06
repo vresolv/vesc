@@ -41,13 +41,6 @@
 #include <DDSPublisher.hpp>
 #include <DDSLogger.hpp>
 
-//#include <rclcpp/rclcpp.hpp>
-//#include <sensor_msgs/msg/imu.hpp>
-//#include <std_msgs/msg/float64.hpp>
-//#include <vesc_msgs/msg/vesc_state.hpp>
-//#include <vesc_msgs/msg/vesc_state_stamped.hpp>
-//#include <vesc_msgs/msg/vesc_imu.hpp>
-//#include <vesc_msgs/msg/vesc_imu_stamped.hpp>
 #include <VescStatePubSubTypes.h>
 #include <VescStateStampedPubSubTypes.h>
 #include <VescImuPubSubTypes.h>
@@ -61,11 +54,6 @@
 namespace vesc_driver
 {
 
-//using std_msgs::msg::Float64;
-//using vesc_msgs::msg::VescState;
-//using vesc_msgs::msg::VescStateStamped;
-//using vesc_msgs::msg::VescImuStamped;
-//using sensor_msgs::msg::Imu;
 
 using std_msgs::msg::Float64;
 using vesc_msgs::msg::VescState;
@@ -76,7 +64,6 @@ using sensor_msgs::msg::Imu;
 class VescDriver
 {
 public:
-  //explicit VescDriver(const rclcpp::NodeOptions & options);
    VescDriver(const std::string& configFile);
    ~VescDriver();
 
@@ -91,14 +78,11 @@ private:
   {
 
     CommandLimit(
-         //rclcpp::Node * node_ptr,
          const std::string & str,
          const std::optional<double> & min_lower = std::optional<double>(),
          const std::optional<double> & max_upper = std::optional<double>()
        );
 
-    //rclcpp::Node * node_ptr;
-    //rclcpp::Logger logger;
     double clip(double value);
     std::string name;
     std::optional<double> lower;
@@ -112,19 +96,6 @@ private:
   CommandLimit position_limit_;
   CommandLimit servo_limit_;
 
-  // DDS services
-  //rclcpp::Publisher<VescStateStamped>::SharedPtr state_pub_;
-  //rclcpp::Publisher<VescImuStamped>::SharedPtr imu_pub_;
-  //rclcpp::Publisher<Imu>::SharedPtr imu_std_pub_;
-
-  //rclcpp::Publisher<Float64>::SharedPtr servo_sensor_pub_;
-  //rclcpp::SubscriptionBase::SharedPtr duty_cycle_sub_;
-  //rclcpp::SubscriptionBase::SharedPtr current_sub_;
-  //rclcpp::SubscriptionBase::SharedPtr brake_sub_;
-  //rclcpp::SubscriptionBase::SharedPtr speed_sub_;
-  //rclcpp::SubscriptionBase::SharedPtr position_sub_;
-  //rclcpp::SubscriptionBase::SharedPtr servo_sub_;
-  //rclcpp::TimerBase::SharedPtr timer_;
 
   //TODO enable subscribers as needed in the future
   DDSPublisher<VescStateStamped, vesc_msgs::msg::VescStateStampedPubSubType> state_pub_;
@@ -138,6 +109,9 @@ private:
   DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> speed_sub_;
   //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> position_sub_;
   //DDSSubscriber<Float64, std_msgs::msg::Float64PubSubType> servo_sub_;
+
+  double tire_radius_m;
+  double sphere_radius_m;
 
   std::string port_;
 

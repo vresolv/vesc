@@ -67,14 +67,12 @@ VescDriver::VescDriver(const std::string& configFilePath)
   //duty_cycle_sub_(std::bind(&VescDriver::dutyCycleCallback, this, _1), "Duty_Cycle", "commands/motor/duty_cycle"),
   //current_sub_(std::bind(&VescDriver::currentCallback, this, _1), "Current", "commands/motor/current"),
   //brake_sub_(std::bind(&VescDriver::brakeCallback, this, _1), "Brake", "commands/motor/brake"),
-  speed_sub_(std::bind(&VescDriver::speedCallback, this, _1), "Speed", "commands/motor/speed"),
+  speed_sub_(std::bind(&VescDriver::speedCallback, this, _1), "Speed", "vesc_control"),
   //position_sub_(std::bind(&VescDriver::positionCallback, this, _1), "Position", "commands/motor/position"),
   //servo_sub_(std::bind(&VescDriver::servoCallback, this, _1), "Servo", "commands/servo/position"),
   timerThreadRunning_(true),
   logger("VescDriver")
 {
-  // get vesc serial port address
-  //std::string port = declare_parameter<std::string>("port", "");
 
    parseConfigFile(configFilePath);
 
@@ -186,10 +184,29 @@ void VescDriver::parseConfigFile(const std::string& configFilePath)
       {
          speed_limit_.lower = jsonConf["speed_min"];
       }
+
+      if (jsonConf.contains("tire_radius"))
+      {
+         tire_radius_m = jsonConf["tire_radius"];
+      }
+      else
+      {
+         throw std::exception("No tire_radius specified in configuration file!");
+      }
+
+      if (jsonConf.contains("sphere_radius"))
+      {
+         sphere_radius_m = jsonConf["sphere_radius"];
+      }
+      else
+      {
+         throw std::exception("No sphere_radius specified in configuration file!");
+      }
    }
    catch (std::exception& e)
    {
-      std::cerr << "Exception: " << e.what() << std::endl;
+      const std::string strException = e.what();
+      logger.log(DDSLogger::Level::LOG_ERROR, "Exception: " + strException);
       std::exit(EXIT_FAILURE);
    }
 
@@ -366,9 +383,6 @@ void VescDriver::vescPacketCallback(const std::shared_ptr<VescPacket const> & pa
     std_imu_msg.orientation().y(imuData->q_y());
     std_imu_msg.orientation().z(imuData->q_z());
 
-
-    //imu_pub_->publish(imu_msg);
-    //imu_std_pub_->publish(std_imu_msg);
     imu_pub_.write(imu_msg);
     imu_std_pub_.write(std_imu_msg);
   }
@@ -436,9 +450,16 @@ void VescDriver::vescErrorCallback(const std::string & error)
  */
 void VescDriver::speedCallback(const Float64 speed)
 {
+  //Since we are getting this speed value from motor assembly controller
+  // it needs to be converted to RPM
+  logger.log(DDSLogger::Level::LOG_INFO, "Received message from Motor Assembly Controller: " + std::to_string(speed.data()));
+
   if (driver_mode_ == MODE_OPERATING)
   {
-    vesc_.setSpeed(speed_limit_.clip(speed.data()));
+    //converting speed from mm/s to rpm
+    double speed_rpm = ((speed.data() / 1000) * 60) / (2 * M_PI * tire_radius_m); //TODO take into account sphere radius
+    vesc_.setSpeed(speed_limit_.clip(speed_rpm));
+    logger.log(DDSLogger::Level::LOG_INFO, "Set VESC speed to " + std::to_string(speed_rpm) + " RPM");
   }
 }
 
@@ -586,10 +607,5 @@ int main(int argc, char** argv)
 
    const std::string configFilePath = argv[1];
 
-   //TODO get params such as port and limits from a config file
    vesc_driver::VescDriver vd(configFilePath);
 }
-
-//#include "rclcpp_components/register_node_macro.hpp"  // NOLINT
-
-//RCLCPP_COMPONENTS_REGISTER_NODE(vesc_driver::VescDriver)
