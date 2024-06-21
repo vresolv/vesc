@@ -5,7 +5,7 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
 endif()
 
-add_executable(${PROJECT_NAME}_node
+add_library(${PROJECT_NAME} STATIC
     vesc_driver/src/vesc_device_namer.cpp
     vesc_driver/src/vesc_device_uuid_lookup.cpp
     vesc_driver/src/vesc_driver.cpp
@@ -14,10 +14,9 @@ add_executable(${PROJECT_NAME}_node
     vesc_driver/src/vesc_packet.cpp
 )
 
-include_directories(vesc_driver/include)
+target_include_directories(${PROJECT_NAME} PUBLIC vesc_driver/include)
 
-target_link_libraries(
-    ${PROJECT_NAME}_node
+target_link_libraries(${PROJECT_NAME}
     DDSCommon
     asio_libs
     io_context
@@ -26,8 +25,17 @@ target_link_libraries(
     fastcdr
 )
 
+add_executable(${PROJECT_NAME}_node
+    vesc_driver/src/vesc_driver_node.cpp
+)
+
+
+target_link_libraries(${PROJECT_NAME}_node
+    ${PROJECT_NAME}
+)
+
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

@@ -47,10 +47,9 @@ using vesc_msgs::msg::VescStateStamped;
 using sensor_msgs::msg::Imu;
 
 VescDriver::VescDriver(const std::string& configFilePath)
-  : vesc_(
-    std::string(),
-    std::bind(&VescDriver::vescPacketCallback, this, _1),
-    std::bind(&VescDriver::vescErrorCallback, this, _1)),
+  : vesc_(std::make_unique<VescInterface>(std::string(),
+     std::bind(&VescDriver::vescPacketCallback, this, _1),
+     std::bind(&VescDriver::vescErrorCallback, this, _1))),
   duty_cycle_limit_("duty_cycle", -1.0, 1.0),
   current_limit_("current"),
   brake_limit_("brake"),
@@ -73,30 +72,63 @@ VescDriver::VescDriver(const std::string& configFilePath)
   timerThreadRunning_(true),
   logger("VescDriver")
 {
+   ParseAndInitializeDriver(configFilePath);
+}
 
+VescDriver::VescDriver(const std::string& configFilePath, std::unique_ptr<VescInterface>&& vescPtr)
+   : vesc_(std::move(vescPtr)),
+   duty_cycle_limit_("duty_cycle", -1.0, 1.0),
+   current_limit_("current"),
+   brake_limit_("brake"),
+   speed_limit_("speed"),
+   position_limit_("position"),
+   servo_limit_("servo", 0.0, 1.0),
+   driver_mode_(MODE_INITIALIZING),
+   fw_version_major_(-1),
+   fw_version_minor_(-1),
+   state_pub_("VescStateStamped", "sensors/core"),
+   imu_pub_("VescImuStamped", "sensors/imu"),
+   imu_std_pub_("Imu", "sensors/imu/raw"),
+   servo_sensor_pub_("Servo_Sensor", "sensors/servo_position_command"),
+   //duty_cycle_sub_(std::bind(&VescDriver::dutyCycleCallback, this, _1), "Duty_Cycle", "commands/motor/duty_cycle"),
+   //current_sub_(std::bind(&VescDriver::currentCallback, this, _1), "Current", "commands/motor/current"),
+   //brake_sub_(std::bind(&VescDriver::brakeCallback, this, _1), "Brake", "commands/motor/brake"),
+   speed_sub_(std::bind(&VescDriver::speedCallback, this, _1), "Speed", "vesc_control"),
+   //position_sub_(std::bind(&VescDriver::positionCallback, this, _1), "Position", "commands/motor/position"),
+   //servo_sub_(std::bind(&VescDriver::servoCallback, this, _1), "Servo", "commands/servo/position"),
+   timerThreadRunning_(true),
+   logger("VescDriver")
+{
+   ParseAndInitializeDriver(configFilePath);
+}
+
+void VescDriver::ParseAndInitializeDriver(const std::string& configFilePath)
+{
    parseConfigFile(configFilePath);
 
-  // attempt to connect to the serial port
-  try
-  {
-    vesc_.connect(port_);
-  } catch (SerialException e)
-  {
-     logger.log(DDSLogger::Level::LOG_ERROR, "Failed to connect to the VESC on port " + port_ + ", " + e.what());
-     std::exit(EXIT_FAILURE);
-  }
+   // attempt to connect to the serial port
+   try
+   {
+      vesc_->connect(port_);
+   }
+   catch (SerialException e)
+   {
+      logger.log(DDSLogger::Level::LOG_ERROR, "Failed to connect to the VESC on port " + port_ + ", " + e.what());
+      std::exit(EXIT_FAILURE);
+   }
 
-  state_pub_.init();
-  imu_pub_.init();
-  imu_std_pub_.init();
-  servo_sensor_pub_.init();
+   state_pub_.init();
+   imu_pub_.init();
+   imu_std_pub_.init();
+   servo_sensor_pub_.init();
 
-  timerThread_ = std::thread(&VescDriver::runTimer, this, std::chrono::milliseconds(20));
+   timerThread_ = std::thread(&VescDriver::runTimer, this, std::chrono::milliseconds(20));
 
-  //TODO: Check if we need other subscribers.
-  //Since we only send the speed values to the vesc motor right now
-  if (speed_sub_.init())
-    speed_sub_.run();
+   //TODO: Check if we need other subscribers.
+   //Since we only send the speed values to the vesc motor right now
+   if (speed_sub_.init())
+      speedThread_ = std::thread(&DDSSubscriber<std_msgs::msg::Float64, std_msgs::msg::Float64PubSubType>::run, &speed_sub_);
+      //speed_sub_.run();
 }
 
 VescDriver::~VescDriver()
@@ -104,6 +136,10 @@ VescDriver::~VescDriver()
    timerThreadRunning_ = false;
    if (timerThread_.joinable())
       timerThread_.join();
+
+   speed_sub_.bRunning = false;
+   if (speedThread_.joinable())
+      speedThread_.join();
 }
 
 void VescDriver::parseConfigFile(const std::string& configFilePath)
@@ -167,12 +203,12 @@ void VescDriver::parseConfigFile(const std::string& configFilePath)
 
       if (jsonConf.contains("servo_max"))
       {
-         position_limit_.upper = jsonConf["servo_max"];
+         servo_limit_.upper = jsonConf["servo_max"];
       }
 
       if (jsonConf.contains("servo_min"))
       {
-         position_limit_.lower = jsonConf["servo_min"];
+         servo_limit_.lower = jsonConf["servo_min"];
       }
 
       if (jsonConf.contains("speed_max"))
@@ -239,7 +275,7 @@ void VescDriver::runTimer(const std::chrono::milliseconds interval)
 void VescDriver::timerCallback()
 {
   // VESC interface should not unexpectedly disconnect, but test for it anyway
-  if (!vesc_.isConnected())
+  if (!vesc_->isConnected())
   {
     logger.log(DDSLogger::Level::LOG_ERROR, "Unexpectedly disconnected from serial port.");
     std::exit(EXIT_FAILURE);
@@ -253,7 +289,7 @@ void VescDriver::timerCallback()
   if (driver_mode_ == MODE_INITIALIZING)
   {
     // request version number, return packet will update the internal version numbers
-    vesc_.requestFWVersion();
+    vesc_->requestFWVersion();
     if (fw_version_major_ >= 0 && fw_version_minor_ >= 0)
     {
       logger.log(DDSLogger::Level::LOG_INFO, "Connected to VESC with firmware version " +
@@ -264,9 +300,9 @@ void VescDriver::timerCallback()
   else if (driver_mode_ == MODE_OPERATING)
   {
     // poll for vesc state (telemetry)
-    vesc_.requestState();
+    vesc_->requestState();
     // poll for vesc imu
-    vesc_.requestImuData();
+    vesc_->requestImuData();
   }
   else
   {
@@ -458,7 +494,7 @@ void VescDriver::speedCallback(const Float64 speed)
   {
     //converting speed from mm/s to rpm
     double speed_rpm = ((speed.data() / 1000) * 60) / (2 * M_PI * tire_radius_m); //TODO take into account sphere radius
-    vesc_.setSpeed(speed_limit_.clip(speed_rpm));
+    vesc_->setSpeed(speed_limit_.clip(speed_rpm));
     logger.log(DDSLogger::Level::LOG_INFO, "Set VESC speed to " + std::to_string(speed_rpm) + " RPM");
   }
 }
@@ -595,17 +631,3 @@ double VescDriver::CommandLimit::clip(double value)
 }
 
 }  // namespace vesc_driver
-
-
-int main(int argc, char** argv)
-{
-   if (argc != 2)
-   {
-      std::cerr << "Usage: " << argv[0] << " <vesc_config_file_absolute_path>\n";
-      return 1;
-   }
-
-   const std::string configFilePath = argv[1];
-
-   vesc_driver::VescDriver vd(configFilePath);
-}

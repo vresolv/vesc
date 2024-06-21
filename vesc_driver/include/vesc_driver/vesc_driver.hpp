@@ -63,16 +63,6 @@ using sensor_msgs::msg::Imu;
 
 class VescDriver
 {
-public:
-   VescDriver(const std::string& configFile);
-   ~VescDriver();
-
-private:
-  // interface to the VESC
-  VescInterface vesc_;
-  void vescPacketCallback(const std::shared_ptr<VescPacket const> & packet);
-  void vescErrorCallback(const std::string & error);
-
   // limits on VESC commands
   struct CommandLimit
   {
@@ -88,6 +78,42 @@ private:
     std::optional<double> lower;
     std::optional<double> upper;
   };
+
+
+public:
+  // driver modes (possible states)
+  typedef enum
+  {
+     MODE_INITIALIZING,
+     MODE_OPERATING
+  }
+  driver_mode_t;
+
+   VescDriver(const std::string& configFile);
+   VescDriver(const std::string& configFile, std::unique_ptr<VescInterface>&& vescPtr);
+   ~VescDriver();
+
+   std::string getPort() const { return port_; }
+   double getSphereRadius() const { return sphere_radius_m; }
+   double getTireRadius() const { return tire_radius_m; }
+   driver_mode_t getDriverMode() const { return driver_mode_; }
+   CommandLimit getDutyCycleLimit() const { return duty_cycle_limit_; }
+   CommandLimit getCurrentLimit() const { return current_limit_; }
+   CommandLimit getBrakeLimit() const { return brake_limit_; }
+   CommandLimit getSpeedLimit() const { return speed_limit_; }
+   CommandLimit getPositionLimit() const { return position_limit_; }
+   CommandLimit getServoLimit() const { return servo_limit_; }
+
+   //Used for testing
+   void setDriverMode(driver_mode_t d) { driver_mode_ = d; }
+
+private:
+  void ParseAndInitializeDriver(const std::string& configFile);
+  // interface to the VESC
+  std::unique_ptr<VescInterface> vesc_;
+  void vescPacketCallback(const std::shared_ptr<VescPacket const> & packet);
+  void vescErrorCallback(const std::string & error);
+
 
   CommandLimit duty_cycle_limit_;
   CommandLimit current_limit_;
@@ -115,6 +141,7 @@ private:
 
   std::string port_;
 
+  std::thread speedThread_;
   std::thread timerThread_;
   std::atomic_bool timerThreadRunning_;
 
@@ -125,14 +152,6 @@ private:
   int32_t getCurrentTimeInSeconds();
 
   void parseConfigFile(const std::string& configFile);
-
-  // driver modes (possible states)
-  typedef enum
-  {
-    MODE_INITIALIZING,
-    MODE_OPERATING
-  }
-  driver_mode_t;
 
   // other variables
   driver_mode_t driver_mode_;           ///< driver state machine mode (state)

@@ -78,7 +78,7 @@ public:
   /**
    * VescInterface destructor.
    */
-  ~VescInterface();
+  virtual ~VescInterface();
 
   /**
    * Sets / updates the function that this class calls when a VESC packet is received.
@@ -96,7 +96,7 @@ public:
    *
    * @throw SerialException
    */
-  void connect(const std::string & port);
+  virtual void connect(const std::string & port);
 
   /**
    * Closes the serial port interface to the VESC.
@@ -108,12 +108,12 @@ public:
    *
    * @return Returns true if the serial port is open, false otherwise.
    */
-  bool isConnected() const;
+  virtual bool isConnected() const;
 
   /**
    * Send a VESC packet.
    */
-  void send(const VescPacket & packet);
+  virtual void send(const VescPacket & packet);
 
   void requestFWVersion();
   void requestState();
@@ -122,7 +122,7 @@ public:
   void setDutyCycle(double duty_cycle);
   void setCurrent(double current);
   void setBrake(double brake);
-  void setSpeed(double speed);
+  virtual void setSpeed(double speed);
   void setPosition(double position);
   void setServo(double servo);
 
