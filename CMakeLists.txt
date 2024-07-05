@@ -5,6 +5,8 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
 endif()
 
+find_package(asio CONFIG REQUIRED)
+
 add_library(${PROJECT_NAME} STATIC
     vesc_driver/src/vesc_device_namer.cpp
     vesc_driver/src/vesc_device_uuid_lookup.cpp
@@ -18,7 +20,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC vesc_driver/include)
 
 target_link_libraries(${PROJECT_NAME}
     DDSCommon
-    asio_libs
+    asio::asio
     io_context
     serial_driver
     fastrtps
