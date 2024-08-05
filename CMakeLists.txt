@@ -36,6 +36,13 @@ target_link_libraries(${PROJECT_NAME}_node
     ${PROJECT_NAME}
 )
 
+add_custom_command(TARGET ${PROJECT_NAME}_node POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${FASTRTPS_DLL}
+    ${FASTCDR_DLL}
+    $<TARGET_FILE_DIR:${PROJECT_NAME}_node>
+)
+
 ## Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
   ARCHIVE DESTINATION lib
