@@ -156,83 +156,83 @@ void VescDriver::parseConfigFile(const std::string& configFilePath)
       nlohmann::json jsonConf;
       configFile >> jsonConf;
 
-      if (jsonConf.contains("port"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("port"))
       {
-         port_ = jsonConf["port"];
+         port_ = jsonConf["vesc"]["port"];
       }
 
-      if (jsonConf.contains("brake_max"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("brake_max"))
       {
-         brake_limit_.upper = jsonConf["brake_max"];
+         brake_limit_.upper = jsonConf["vesc"]["brake_max"];
       }
 
-      if (jsonConf.contains("brake_min"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("brake_min"))
       {
-         brake_limit_.lower = jsonConf["brake_min"];
+         brake_limit_.lower = jsonConf["vesc"]["brake_min"];
       }
 
-      if (jsonConf.contains("current_max"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("current_max"))
       {
-         current_limit_.upper = jsonConf["current_max"];
+         current_limit_.upper = jsonConf["vesc"]["current_max"];
       }
 
-      if (jsonConf.contains("current_min"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("current_min"))
       {
-         current_limit_.lower = jsonConf["current_min"];
+         current_limit_.lower = jsonConf["vesc"]["current_min"];
       }
 
-      if (jsonConf.contains("duty_cycle_max"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("duty_cycle_max"))
       {
-         duty_cycle_limit_.upper = jsonConf["duty_cycle_max"];
+         duty_cycle_limit_.upper = jsonConf["vesc"]["duty_cycle_max"];
       }
 
-      if (jsonConf.contains("duty_cycle_min"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("duty_cycle_min"))
       {
-         duty_cycle_limit_.lower = jsonConf["duty_cycle_min"];
+         duty_cycle_limit_.lower = jsonConf["vesc"]["duty_cycle_min"];
       }
 
-      if (jsonConf.contains("position_max"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("position_max"))
       {
-         position_limit_.upper = jsonConf["position_max"];
+         position_limit_.upper = jsonConf["vesc"]["position_max"];
       }
 
-      if (jsonConf.contains("position_min"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("position_min"))
       {
-         position_limit_.lower = jsonConf["position_min"];
+         position_limit_.lower = jsonConf["vesc"]["position_min"];
       }
 
-      if (jsonConf.contains("servo_max"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("servo_max"))
       {
-         servo_limit_.upper = jsonConf["servo_max"];
+         servo_limit_.upper = jsonConf["vesc"]["servo_max"];
       }
 
-      if (jsonConf.contains("servo_min"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("servo_min"))
       {
-         servo_limit_.lower = jsonConf["servo_min"];
+         servo_limit_.lower = jsonConf["vesc"]["servo_min"];
       }
 
-      if (jsonConf.contains("speed_max"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("speed_max"))
       {
-         speed_limit_.upper = jsonConf["speed_max"];
+         speed_limit_.upper = jsonConf["vesc"]["speed_max"];
       }
 
-      if (jsonConf.contains("speed_min"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("speed_min"))
       {
-         speed_limit_.lower = jsonConf["speed_min"];
+         speed_limit_.lower = jsonConf["vesc"]["speed_min"];
       }
 
-      if (jsonConf.contains("tire_radius"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("tire_radius"))
       {
-         tire_radius_m = jsonConf["tire_radius"];
+         tire_radius_m = jsonConf["vesc"]["tire_radius"];
       }
       else
       {
          throw std::exception("No tire_radius specified in configuration file!");
       }
 
-      if (jsonConf.contains("sphere_radius"))
+      if (jsonConf.contains("vesc") && jsonConf["vesc"].contains("sphere_radius"))
       {
-         sphere_radius_m = jsonConf["sphere_radius"];
+         sphere_radius_m = jsonConf["vesc"]["sphere_radius"];
       }
       else
       {
